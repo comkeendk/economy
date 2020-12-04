@@ -1,0 +1,8 @@
+﻿{
+  "NumberOfPersons": 2,
+  "Married": true,
+  "MunicipalityCode": 147,
+  "Salary": [ 530000, 350000, 880000 ],
+  "PersonalIncomeBasis": [ 487600, 322000 ],
+  "TaxableIncomeBasis": [ 459600, 294000 ]
+}

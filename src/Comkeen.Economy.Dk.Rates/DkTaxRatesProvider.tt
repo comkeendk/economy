@@ -1,0 +1,102 @@
+<#@ template language="C#" #>
+<#@ output extension=".cs" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.IO" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Text" #>
+
+/*
+* This class was generated using a tool.
+* Please do not edit the generated class directly!
+* Instead apply changes in the template, and re-generate the provider.
+*/
+using Comkeen.Economy.Core.Abstractions;
+using Comkeen.Economy.Dk.Rates;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace Comkeen.Economy.Dk.Rates
+{
+    public class DkTaxRatesProvider : ITaxRatesProvider<DkTaxRates>
+    {
+        private readonly IDictionary<DkTaxRates, SortedDictionary<int, decimal>> _rates;
+
+        public DkTaxRatesProvider()
+        {
+            _rates = new Dictionary<DkTaxRates, SortedDictionary<int, decimal>>();
+            PopulateRates();
+        }
+
+        public decimal GetRate(int year, DkTaxRates taxRateKey)
+        {
+            if(_rates.TryGetValue(taxRateKey, out SortedDictionary<int, decimal> yearDictionary))
+            {
+                if(yearDictionary.TryGetValue(year, out decimal rate))
+                {
+                    return rate;
+                }
+                var yearRange = GetYearRange(yearDictionary);
+                if(year < yearRange.First) { return 0m; }
+                if(yearRange.Last < year) { return yearDictionary[yearRange.Last]; }
+            }
+            throw new ArgumentException("The key does not exist", nameof(taxRateKey));
+        }
+
+        private void PopulateRates()
+        {
+            <#=GenerateRates()#>
+        }
+
+        private static (int First, int Last) GetYearRange(SortedDictionary<int, decimal> rates)
+        {
+            var keys = rates.Keys;
+
+            return (First: keys.First(), Last: keys.Last());
+        }
+    }
+}
+<#+
+    private string GenerateRates()
+    {
+        var ratesBuilder = new StringBuilder();
+        var lines = File.ReadAllLines("TaxRates.csv");
+        var headline = lines[0].Split(';');
+        var descriptionColumn = -1;
+        var firstYearColumn = -1;
+        var years = new List<int>();
+        for (int i = 0;i < headline.Length;i++)
+        {
+            if(headline[i] == "Key")
+            {
+                descriptionColumn = i;
+                continue;
+            }
+            if(int.TryParse(headline[i], out int tmpYear))
+            {
+                if(firstYearColumn < 0)
+                {
+                    firstYearColumn = i;
+                }
+                years.Add(tmpYear);
+                continue;
+            }
+        }
+
+        foreach(var line in lines.Skip(1))
+        {
+            var lineArray = line.Split(';');
+            ratesBuilder.AppendLine($@"_rates[DkTaxRates.{lineArray[descriptionColumn]}] = new SortedDictionary<int, decimal>()");
+            ratesBuilder.AppendLine(@"{");
+            for (int i = 0;i < years.Count;i++)
+            {
+                ratesBuilder.AppendLine($@"{{ {years[i]}, {lineArray[i + firstYearColumn].Replace(',', '.')}m }}{(i < years.Count - 1 ? "," : "")}");
+            }
+            ratesBuilder.AppendLine(@"};");
+        }
+
+        return ratesBuilder.ToString();
+    }
+#>

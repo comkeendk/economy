@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+  <PropertyGroup>
+    <EPPlusFolder>$(NugetPackageRoot)\epplus\5.3.1\lib\netstandard2.0</EPPlusFolder>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Mono.TextTemplating" Version="2.0.5" />
+    <PackageReference Include="Microsoft.Extensions.FileProviders.Physical" Version="3.1.7" />
+    <PackageReference Include="System.IO.FileSystem" Version="4.3.0" />
+    <PackageReference Include="EPPlus" Version="5.3.1" />
+    <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Comkeen.Economy.Core.Abstractions\Comkeen.Economy.Core.Abstractions.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <DotNetCliToolReference Include="dotnet-t4-project-tool" Version="2.0.5" />
+    <TextTemplate Include="**\*.tt" />
+    <T4ReferencePath Include="$(TargetDir)" />
+    <T4ParameterValues Include="EPPlusFolder">
+      <Value>$(EPPlusFolder)</Value>
+    </T4ParameterValues>
+  </ItemGroup>
+  <Target Name="TextTemplateTransform" BeforeTargets="BeforeBuild">
+    <ItemGroup>
+      <Compile Remove="**\*.Generated.cs" />
+    </ItemGroup>
+    <Exec WorkingDirectory="$(ProjectDir)" Command="dotnet t4 %(TextTemplate.Identity) -o %(TextTemplate.Filename).Generated.cs" />
+    <ItemGroup>
+      <Compile Include="**\*.Generated.cs" />
+    </ItemGroup>
+  </Target>
+</Project>

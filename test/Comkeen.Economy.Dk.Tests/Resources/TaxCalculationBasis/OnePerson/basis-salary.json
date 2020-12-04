@@ -1,0 +1,7 @@
+﻿{
+  "numberOfPersons": 1,
+  "MunicipalityCode": 147,
+  "Salary": [ 600000, 0, 600000 ],
+  "PersonalIncomeBasis": [ 552000, 0 ],
+  "TaxableIncomeBasis": [ 524000, 0 ]
+}
